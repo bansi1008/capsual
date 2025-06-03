@@ -11,14 +11,14 @@ const genratecapsual = async (req, res) => {
        VALUES ($1, $2, $3, $4) RETURNING *`,
       [user_id, recipient_email, message, send_date]
     );
-    await sendEmail({
-      to: recipient_email,
-      subject: "You have a new Time Capsule message!",
-      text: `Hi! You have received a time capsule message:\n\n"${message}"\n\nIt will be delivered on ${send_date}.`,
-      html: `<p>Hi! You have received a time capsule message:</p>
-             <blockquote>${message}</blockquote>
-             <p>It will be delivered on <strong>${send_date}</strong>.</p>`,
-    });
+    // await sendEmail({
+    //   to: recipient_email,
+    //   subject: "You have a new Time Capsule message!",
+    //   text: `Hi! You have received a time capsule message:\n\n"${message}"\n\nIt will be delivered on ${send_date}.`,
+    //   html: `<p>Hi! You have received a time capsule message:</p>
+    //          <blockquote>${message}</blockquote>
+    //          <p>It will be delivered on <strong>${send_date}</strong>.</p>`,
+    // });
 
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -27,6 +27,43 @@ const genratecapsual = async (req, res) => {
   }
 };
 
+const sendPendingCapsules = async (req, res) => {
+  try {
+    const capsules = await pool.query(
+      `SELECT * FROM capsules WHERE send_date <= NOW() AND sent = false`
+    );
+
+    if (capsules.rows.length === 0) {
+      return res.status(200).json({ message: "No capsules to send" });
+    }
+
+    // Send emails one by one
+    for (const capsule of capsules.rows) {
+      await sendEmail({
+        to: capsule.recipient_email,
+        subject: "You have a new Time Capsule message!",
+        text: `Hi! You have received a time capsule message:\n\n"${capsule.message}"\n\nIt was scheduled for delivery on ${capsule.send_date}.`,
+        html: `<p>Hi! You have received a time capsule message:</p>
+               <blockquote>${capsule.message}</blockquote>
+               <p>It was scheduled for delivery on <strong>${capsule.send_date}</strong>.</p>`,
+      });
+
+      await pool.query(`UPDATE capsules SET sent = true WHERE id = $1`, [
+        capsule.id,
+      ]);
+    }
+
+    res.status(200).json({
+      message: "Capsules sent successfully",
+      count: capsules.rows.length,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error sending pending capsules" });
+  }
+};
+
 module.exports = {
   genratecapsual,
+  sendPendingCapsules,
 };
