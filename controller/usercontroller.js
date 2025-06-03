@@ -31,8 +31,8 @@ const signup = async (req, res) => {
     }
 
     const result = await pool.query(
-      "INSERT INTO data (name, email, password) VALUES ($1, $2, $3) RETURNING *",
-      [name, email, hashedPassword]
+      "INSERT INTO data (name, email, password, auth_provider) VALUES ($1, $2, $3, $4) RETURNING *",
+      [name, email, hashedPassword, "local"]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

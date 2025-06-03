@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db.js");
 const sendEmail = require("../utils/sendEmail");
+const cron = require("node-cron");
 
 const genratecapsual = async (req, res) => {
   const { user_id, recipient_email, message, send_date } = req.body;
@@ -37,15 +38,14 @@ const sendPendingCapsules = async (req, res) => {
       return res.status(200).json({ message: "No capsules to send" });
     }
 
-    // Send emails one by one
     for (const capsule of capsules.rows) {
       await sendEmail({
         to: capsule.recipient_email,
         subject: "You have a new Time Capsule message!",
         text: `Hi! You have received a time capsule message:\n\n"${capsule.message}"\n\nIt was scheduled for delivery on ${capsule.send_date}.`,
         html: `<p>Hi! You have received a time capsule message:</p>
-               <blockquote>${capsule.message}</blockquote>
-               <p>It was scheduled for delivery on <strong>${capsule.send_date}</strong>.</p>`,
+                <blockquote>${capsule.message}</blockquote>
+                <p>It was scheduled for delivery on <strong>${capsule.send_date}</strong>.</p>`,
       });
 
       await pool.query(`UPDATE capsules SET sent = true WHERE id = $1`, [
@@ -62,6 +62,41 @@ const sendPendingCapsules = async (req, res) => {
     res.status(500).json({ error: "Error sending pending capsules" });
   }
 };
+
+// const sendPendingCapsules = async () => {
+//   try {
+//     const now = new Date();
+
+//     const result = await pool.query(
+//       `SELECT * FROM capsules WHERE send_date <= $1 AND sent = false`,
+//       [now]
+//     );
+
+//     for (const capsule of result.rows) {
+//       await sendEmail({
+//         to: capsule.recipient_email,
+//         subject: "You have a new Time Capsule message!",
+//         text: `Hi! You have received a time capsule message:\n\n"${capsule.message}"\n\nSent on ${capsule.send_date}.`,
+//         html: `<p>Hi! You have received a time capsule message:</p>
+//                <blockquote>${capsule.message}</blockquote>
+//                <p>Sent on <strong>${capsule.send_date}</strong>.</p>`,
+//       });
+
+//       await pool.query(`UPDATE capsules SET sent = true WHERE id = $1`, [
+//         capsule.id,
+//       ]);
+//     }
+
+//     console.log("Pending capsules processed at", now);
+//   } catch (error) {
+//     console.error("Error sending pending capsules:", error);
+//   }
+// };
+
+// cron.schedule("* * * * *", () => {
+//   console.log("Running cron job to send pending capsules...");
+//   sendPendingCapsules();
+// });
 
 module.exports = {
   genratecapsual,
