@@ -3,6 +3,7 @@ const pool = require("../db.js");
 const app = express();
 const bycrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
 require("dotenv").config();
 
 const signup = async (req, res) => {
