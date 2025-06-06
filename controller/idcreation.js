@@ -2,8 +2,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db.js");
 const sendEmail = require("../utils/sendEmail");
-const cron = require("node-cron");
-
+https://console.cron-job.org/jobs
 const genratecapsual = async (req, res) => {
   const { id, recipient_email, message, send_date, sent } = req.body;
   try {
