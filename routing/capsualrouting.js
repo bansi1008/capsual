@@ -7,6 +7,6 @@ const {
 const auth = require("../middelware/auth.js");
 
 router.post("/capsual", auth, genratecapsual);
-router.get("/send-pending-capsules", auth, sendPendingCapsules);
+router.get("/send-pending-capsules", sendPendingCapsules);
 
 module.exports = router;
