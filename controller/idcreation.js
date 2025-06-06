@@ -5,21 +5,21 @@ const sendEmail = require("../utils/sendEmail");
 const cron = require("node-cron");
 
 const genratecapsual = async (req, res) => {
-  const { user_id, recipient_email, message, send_date } = req.body;
+  const { id, recipient_email, message, send_date, sent } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO capsules (user_id, recipient_email, message, send_date)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [user_id, recipient_email, message, send_date]
+      `INSERT INTO capsules (id, recipient_email, message, send_date,sent)
+       VALUES ($1, $2, $3, $4,$5) RETURNING *`,
+      [id, recipient_email, message, send_date, sent]
     );
-    // await sendEmail({
-    //   to: recipient_email,
-    //   subject: "You have a new Time Capsule message!",
-    //   text: `Hi! You have received a time capsule message:\n\n"${message}"\n\nIt will be delivered on ${send_date}.`,
-    //   html: `<p>Hi! You have received a time capsule message:</p>
-    //          <blockquote>${message}</blockquote>
-    //          <p>It will be delivered on <strong>${send_date}</strong>.</p>`,
-    // });
+    await sendEmail({
+      to: recipient_email,
+      subject: "You have a new Time Capsule message!",
+      text: `Hi! You have received a time capsule message:\n\n"${message}"\n\nIt will be delivered on ${send_date}.`,
+      html: `<p>Hi! You have received a time capsule message:</p>
+              <blockquote>${message}</blockquote>
+              <p>It will be delivered on <strong>${send_date}</strong>.</p>`,
+    });
 
     res.status(201).json(result.rows[0]);
   } catch (err) {
