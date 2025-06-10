@@ -16,7 +16,7 @@ const signup = async (req, res) => {
   }
   try {
     const existingUser = await pool.query(
-      "SELECT * FROM data  WHERE email = $1",
+      'SELECT * FROM "user" WHERE email = $1',
       [email]
     );
     if (existingUser.rows.length > 0) {
@@ -32,7 +32,7 @@ const signup = async (req, res) => {
     }
 
     const result = await pool.query(
-      "INSERT INTO data (name, email, password) VALUES ($1, $2, $3) RETURNING *",
+      'INSERT INTO "user" (name, email, password) VALUES ($1, $2, $3) RETURNING id, email, name',
       [name, email, hashedPassword]
     );
     res.status(201).json(result.rows[0]);
@@ -50,7 +50,7 @@ const login = async (req, res) => {
   }
 
   try {
-    const user = await pool.query("SELECT * FROM data WHERE email = $1", [
+    const user = await pool.query('SELECT * FROM "user" WHERE email = $1', [
       email,
     ]);
     if (user.rows.length === 0) {
@@ -62,7 +62,7 @@ const login = async (req, res) => {
       return res.status(400).json({ error: "Invalid email or password" });
     }
     const token = jwt.sign(
-      { userId: user.rows[0].id, email: user.rows[0].email },
+      { id: user.rows[0].id, email: user.rows[0].email },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
